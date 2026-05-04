@@ -13,7 +13,7 @@ Implementasi Wazuh SIEM, Web Application Firewall, dan Tools Monitoring untuk De
 6. Isolasi Lingkungan Uji (Virtual Lab)
 7. Ekstensibilitas Tools Keamanan
 
-#Installasi SIEM Wazuh di Ubuntu server 22.04.5 (VM SIEM)
+# Installasi SIEM Wazuh di Ubuntu server 22.04.5 (VM SIEM)
 1. Buka VM > New > Isi Vm Name, VM Folder sesuaikan dengan penyimpanan yang diinginkan > Select ISO Image dengan mengklik tanda panah kebawah dan pilih iso ubuntu server yang sudah di download.
    <img width="946" height="761" alt="image" src="https://github.com/user-attachments/assets/1d0462a2-bbc1-4885-99ad-1a979516014a" />
 
