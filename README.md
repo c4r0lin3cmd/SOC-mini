@@ -1,7 +1,9 @@
 # SOC-mini
 Implementasi Wazuh SIEM, Web Application Firewall, dan Tools Monitoring untuk Deteksi Serangan pada Arsitektur Virtual Multi-VM (Kali Linux sebagai Attacker dan Ubuntu Server sebagai Target)
 
-#Arsitektur
+# Arsitektur
+<img width="785" height="859" alt="image" src="https://github.com/user-attachments/assets/1c7afe54-a326-468b-bd35-af8b07d5b8aa" />
+
 
 
 # Fitur Utama
