@@ -175,7 +175,8 @@ Implementasi Wazuh SIEM, Web Application Firewall, dan Tools Monitoring untuk De
     ```
     sudo systemctl restart apache2
     ```
-Secara default, ModSecurity baru "terpasang" tapi belum "bekerja" memblokir. Dia cuma menonton saja (Detection Only). Yuk, kita suruh dia jadi satpam galak.
+   Secara default, ModSecurity baru "terpasang" tapi belum "bekerja" memblokir. Dia cuma menonton saja (Detection Only). Yuk, kita suruh dia jadi satpam galak.
+
 22. Copy file konfigurasi dasar
     ```
     sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
