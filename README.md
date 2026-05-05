@@ -96,7 +96,80 @@ c. Server Attacker : Server yang digunakan untuk menyerang
    sudo /var/ossec/bin/agent-auth -m IP_WAZUH_SERVER
    ```
 7. Setup Web Server di Target
+   Install apache
+   ```
+   sudo apt install apache2 -y
+   ```
+8. Verifikasi instalasi apache2
+   ```
+   sudo systemctl status apache2
+   ```
+9. Jika belum aktif, jalankan perintah
+   ```
+   sudo systemctl start apache2
+   ```
+10. Agar Apache langsung menyala setiap kali server di-reboot, jalankan:
+    ```
+    sudo systemctl enable apache2
+    ```
+11. Siapkan folder website
+    ```
+    sudo mkdir -p /var/www/website-kamu
+    ```
+12. Pindahkan file website hasil coding ke folder tadi menggunakan SCP, FileZilla, atau kalau cuma buat ngetes, bikin file baru:
+    ```
+    sudo nano /var/www/website-kamu/index.html
+    ```
+    Isi dengan kode HTML yang diinginkan
+13. Atur hak akses (permission) supaya Apache bisa membaca file tanpa kendala keamanan. Kita berikan kepemilikan folder ke user www-data (usernya si Apache).
+    ```
+    sudo chown -R www-data:www-data /var/www/website-kamu
+    sudo chmod -R 755 /var/www/website-kamu
+    ```
+14. Buat virtual host, ini bagian paling krusial. Apache perlu tahu kalau ada orang akses alamat tertentu, harus diarahkan ke folder mana. Bikin konfigurasi baru
+    ```
+    sudo nano /etc/apache2/sites-available/website-kamu.conf
+    ```
+    isi dengan kode berikut
+       ```
+       <VirtualHost *:80>
+          ServerAdmin admin@website.com
+          DocumentRoot /var/www/website-kamu
+          ServerName alamat-ip-server-kamu
+   
+          ErrorLog ${APACHE_LOG_DIR}/error.log
+          CustomLog ${APACHE_LOG_DIR}/access.log combined
+       </VirtualHost>
+      ```
+15. Aktifkan config baru
+    ```
+      sudo a2ensite website-kamu.conf
+    ```
+16. Matikan config default (biar gak tabrakan)
+    ```
+      sudo a2dissite 000-default.conf
+    ```
+17. Cek apakah ada error penulisan
+    ```
+    sudo apache2ctl configtest
+    ```
+18. Akses website yang sudah dideploy tadi di web browser dengan
+    ```
+    http://<ALAMAT_IP_SERVER>
+    ```
+    <img width="958" height="756" alt="image" src="https://github.com/user-attachments/assets/24f5209f-31c7-480c-b92c-c65d20a94be3" />
 
+    
+
+
+
+
+
+
+
+
+
+    
 
 
 
