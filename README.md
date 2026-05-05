@@ -16,9 +16,9 @@ Implementasi Wazuh SIEM, Web Application Firewall, dan Tools Monitoring untuk De
 7. Ekstensibilitas Tools Keamanan
 
 # Note 
-a. Server SIEM : Server untuk SIEM manajer 
-b. Server Target : Server yang akan digunakan untuk Deploy Website, Install WAF ModSecurity, Wazuh Agent, dan Suricata IDS
-c. Server Attacker : Server yang digunakan untuk menyerang 
+1. Server SIEM : Server untuk SIEM manajer
+2. Server Target : Server yang akan digunakan untuk Deploy Website, Install WAF ModSecurity, Wazuh Agent, dan Suricata IDS
+3. Server Attacker : Server yang digunakan untuk menyerang 
 
 # Installasi Server SIEM
 1. Buka VM > New > Isi Vm Name, VM Folder sesuaikan dengan penyimpanan yang diinginkan > Select ISO Image dengan mengklik tanda panah kebawah dan pilih iso ubuntu server yang sudah di download.
@@ -54,11 +54,16 @@ c. Server Attacker : Server yang digunakan untuk menyerang
     ```
     https://<ALAMAT_IP_UBUNTU_SERVER_ANDA>
     ```
+    <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7f59f9af-7aae-4245-bed7-d336acc83810" />
+
 12. Untuk login, coba dengan username dan password 'admin'. Jika gagal, jalankan perintah berikut:
     ```
      sudo tar -axf wazuh-install-files.tar wazuh-install-files/wazuh-passwords.txt -O | grep -P "\'admin\'" -A 1
     ```
-# Deploy Website, Install WAF ModSecurity, Wazuh Agent, dan Suricata IDS di Ubuntu Server (Server Target)
+    Berikut adalah tampilan dashboard wazuh manager ketika pertama kali berhasil login
+    <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e6b0ad46-7ae1-4dc2-9f5f-7f9634268f7c" />
+
+#  Instal Wazuh Agent, Deploy Website, Install WAF ModSecurity, dan Suricata IDS di Ubuntu Server (Server Target)
 1. Cara installasi ubuntu server di vm untuk server target sama dengan instalasi ubuntu server untuk server SIEM. Namun, untuk server target ini spesifikasinya lebih ringan yaitu : Base Memory : 2GB dan Processors : 1 Core.
 2. Klik Start
 3. Pertama, installasi wazuh agent menggunakan perintah berikut
@@ -95,8 +100,7 @@ c. Server Attacker : Server yang digunakan untuk menyerang
    ```
    sudo /var/ossec/bin/agent-auth -m IP_WAZUH_SERVER
    ```
-7. Setup Web Server di Target
-   Install apache
+7. Setup Web Server di Target, install apache
    ```
    sudo apt install apache2 -y
    ```
@@ -159,11 +163,87 @@ c. Server Attacker : Server yang digunakan untuk menyerang
     ```
     <img width="958" height="756" alt="image" src="https://github.com/user-attachments/assets/24f5209f-31c7-480c-b92c-c65d20a94be3" />
 
-    
+19. Instalasi WAF (ModSecurity)
+    ```
+      sudo apt install libapache2-mod-security -y
+    ```
+20. Aktifkan
+    ```
+    a2enmod security2
+    ```
+21. Restart apache
+    ```
+    sudo systemctl restart apache2
+    ```
+Secara default, ModSecurity baru "terpasang" tapi belum "bekerja" memblokir. Dia cuma menonton saja (Detection Only). Yuk, kita suruh dia jadi satpam galak.
+22. Copy file konfigurasi dasar
+    ```
+    sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+    ``` 
+23. Edit filenya
+    ```
+    sudo nano /etc/modsecurity/modsecurity.conf
+    ```
+    Cari tulisan SecRuleEngine DetectionOnly, lalu ubah menjadi:SecRuleEngine On. Simpan (Ctrl+O, Enter) dan Keluar (Ctrl+X). ModSecurity butuh daftar "aturan" untuk tahu mana serangan dan mana yang bukan. Kita akan pakai OWASP Core Rule Set (CRS) yang sudah sangat lengkap.
+24. Hapus aturan bawaan yang lama
+    ```
+    sudo rm -rf /usr/share/modsecurity-crs
+    ```
+25. Download aturan terbaru dari github
+    ```
+     sudo git clone https://github.com/coreruleset/coreruleset /usr/share/modsecurity-crs
+    ```
+26. Siapkan file configurasinya
+    ```
+    sudo mv /usr/share/modsecurity-crs/crs-setup.conf.example /usr/share/modsecurity-crs/crs-setup.conf
+    ```
+27. Beritahu apache untuk memakai aturan tersebut, dengan edit file  /etc/apache2/mods-enabled/security2.conf
+    ```
+    sudo nano /etc/apache2/mods-enabled/security2.conf
+    ```
+    Pastikan di dalamnya ada baris ini (arahkan ke folder yang baru kita download):
+    ```
+    IncludeOptional /etc/modsecurity/*.conf
+    Include /usr/share/modsecurity-crs/crs-setup.conf
+    Include /usr/share/modsecurity-crs/rules/*.conf
+    ```
+28. Restart Apache
+    ```
+    sudo systemctl restart apache2
+    ```
+    Di dalam case saya, ada eror dikarenakan ubuntu yang saya gunakan lebih jadul dari pada owasp crs yang baru di download. Untuk mengakalinya, gunakan perintah berikut
+    ```
+    //Masuk ke folder rules
+    cd /usr/share/modsecurity-crs/rules/
+    //Ubah nama file yang bermasalah dengan ganti akhiran .conf jadi .bak supaya tidak dibaca oleh Apache.
+    sudo mv REQUEST-922-MULTIPART-ATTACK.conf REQUEST-922-MULTIPART-ATTACK.conf.bak
+    ```
+    Tes apache
+    ```
+    sudo apache2ctl configtest
+    ```
+    Kalau muncul "Syntax OK" berarti sudah berhasil, tinggal jalankan kembali perintah untuk restart apachenya. 
+Sekarang, kita ingin si satpam (ModSecurity) melapor ke pengawas (Wazuh) kalau ada serangan.
+1. Edit konfigurasi wazuh agent
+   ```
+   sudo nano /var/ossec/etc/ossec.conf
+   ```
+2. Tambahkan blok berikut di bagian bawah (sebelum penutup </ossec_config>):
+   ```
+   <localfile>
+      <log_format>apache</log_format>
+      <location>/var/log/apache2/error.log</location>
+    </localfile>
 
-
-
-
+    <localfile>
+      <log_format>json</log_format>
+      <location>/var/log/apache2/modsec_audit.log</location>
+    </localfile>
+   ```
+3. Restart Wazuh Agent
+   ```
+   sudo systemctl restart wazuh-agent
+   ```
 
 
 
